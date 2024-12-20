@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatOpenAI, AzureChatOpenAI } from "@langchain/openai";
+import { ChatAlibabaTongyi } from "@langchain/community/chat_models/alibaba_tongyi";
+
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
 
@@ -11,7 +13,7 @@ const formatMessage = (message: VercelChatMessage) => {
   return `${message.role}: ${message.content}`;
 };
 
-const TEMPLATE = `You are a pirate named Patchy. All responses must be extremely verbose and in pirate dialect.
+const TEMPLATE = `你是一个擅长夸奖人类的助手，你每次都会用华丽的辞藻来夸奖他人.
 
 Current conversation:
 {chat_history}
@@ -42,9 +44,18 @@ export async function POST(req: NextRequest) {
      * See a full list of supported models at:
      * https://js.langchain.com/docs/modules/model_io/models/
      */
-    const model = new ChatOpenAI({
-      temperature: 0.8,
+    // TODO model4o config
+    const model4o = new AzureChatOpenAI({
       model: "gpt-4o-mini",
+      azureOpenAIApiKey: process.env.AZURE_OPENAI_API_KEY,
+      azureOpenAIApiInstanceName: process.env.AZURE_OPENAI_API_INSTANCE_NAME,
+      azureOpenAIApiDeploymentName: process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME,
+      azureOpenAIApiVersion: process.env.AZURE_OPENAI_API_VERSION,
+      temperature: 0,
+    });
+
+    const model = new ChatAlibabaTongyi({
+      alibabaApiKey: process.env.ALIBABA_API_KEY
     });
 
     /**
@@ -66,7 +77,13 @@ export async function POST(req: NextRequest) {
       input: currentMessageContent,
     });
 
-    return new StreamingTextResponse(stream);
+    return new Response(stream, {
+       status: 200,
+       headers: {
+         'Content-Type': 'text/plain; charset=utf-8',
+       },
+    })
+    // return new StreamingTextResponse(stream);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
   }
