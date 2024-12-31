@@ -3,6 +3,8 @@ import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
+import { ChatAlibabaTongyi } from "@langchain/community/chat_models/alibaba_tongyi";
+
 import { SerpAPI } from "@langchain/community/tools/serpapi";
 import { Calculator } from "@langchain/community/tools/calculator";
 import {
@@ -39,7 +41,7 @@ const convertLangChainMessageToVercelMessage = (message: BaseMessage) => {
   }
 };
 
-const AGENT_SYSTEM_TEMPLATE = `You are a talking parrot named Polly. All final responses must be how a talking parrot would respond. Squawk often!`;
+const AGENT_SYSTEM_TEMPLATE = `你是我的心理医生，我希望你能够治愈我的!`;
 
 /**
  * This handler initializes and calls an tool caling ReAct agent.
@@ -65,10 +67,17 @@ export async function POST(req: NextRequest) {
     // Requires process.env.SERPAPI_API_KEY to be set: https://serpapi.com/
     // You can remove this or use a different tool instead.
     const tools = [new Calculator(), new SerpAPI()];
-    const chat = new ChatOpenAI({
-      model: "gpt-4o-mini",
-      temperature: 0,
+
+    	
+    // TODO API_KEY
+    const chat = new ChatAlibabaTongyi({
+      alibabaApiKey: process.env.ALIBABA_API_KEY
     });
+    
+    // const chat = new ChatOpenAI({
+    //   model: "gpt-4o-mini",
+    //   temperature: 0,
+    // });
 
     /**
      * Use a prebuilt LangGraph agent.
